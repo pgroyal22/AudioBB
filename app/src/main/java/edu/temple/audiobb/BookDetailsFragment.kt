@@ -5,21 +5,17 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
+import org.w3c.dom.Text
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
-
-/**
- * A simple [Fragment] subclass.
- * Use the [BookDetailsFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
 class BookDetailsFragment : Fragment() {
 
+    lateinit var  layoutView : View
+    lateinit var  titleTextView: TextView
+    lateinit var  authorTextView: TextView
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -30,26 +26,30 @@ class BookDetailsFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_book_details, container, false)
+        layoutView = inflater.inflate(R.layout.fragment_book_details, container, false)
+        titleTextView = layoutView.findViewById<TextView>(R.id.detailsTitleText)
+        authorTextView = layoutView.findViewById<TextView>(R.id.detailsAuthorText)
+
+        ViewModelProvider(requireActivity())
+            .get(BookObjectViewModel::class.java)
+            .getBookObject().observe(requireActivity(), {
+                setSelection(it)
+            })
+
+        return layoutView
     }
 
     companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment BookDetailsFragment.
-         */
-        // TODO: Rename and change types and number of parameters
+
         @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            BookDetailsFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
-                }
-            }
+        fun newInstance(): BookDetailsFragment {
+            return (BookDetailsFragment())
+
+        }
+    }
+
+    private fun setSelection(book: Book){
+        titleTextView.text = book.title
+        authorTextView.text = book.author
     }
 }

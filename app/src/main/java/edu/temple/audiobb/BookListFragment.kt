@@ -28,7 +28,7 @@ class BookListFragment : Fragment() {
         layout = inflater.inflate(R.layout.fragment_book_list, container, false)
 
         recyclerView = layout.findViewById<RecyclerView>(R.id.bookRecyclerView)
-        recyclerView.layoutManager = GridLayoutManager(this.context, 2)
+        recyclerView.layoutManager = GridLayoutManager(this.context, 1)
         return layout
     }
 
@@ -38,6 +38,7 @@ class BookListFragment : Fragment() {
         val onClickListener = View.OnClickListener {
             val position = recyclerView.getChildAdapterPosition(it)
             viewModelProvider.get(BookObjectViewModel::class.java).setBookObject(bookObjects.get(position))
+            (activity as EventInterface).selectionMade()
         }
         recyclerView.adapter = BookAdapter(bookObjects, onClickListener)
     }
@@ -58,5 +59,8 @@ class BookListFragment : Fragment() {
             Book("Adventures of Huckleberry Finn", "Mark Twain"),
             Book("Slaughterhouse-Five", "Kurt Vonnegut"),
             Book("Welcome to the Monkey House", "Kurt Vonnegut")))
+    }
+    interface EventInterface{
+        fun selectionMade()
     }
 }

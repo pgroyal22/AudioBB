@@ -5,12 +5,12 @@
       <map>
         <entry key="app/src/main/res/layout-large-land/activity_main.xml" value="0.1" />
         <entry key="app/src/main/res/layout-large-port/activity_main.xml" value="0.1" />
-        <entry key="app/src/main/res/layout-small-land/activity_main.xml" value="0.1" />
+        <entry key="app/src/main/res/layout-small-land/activity_main.xml" value="0.22" />
         <entry key="app/src/main/res/layout-small-port/activity_main.xml" value="0.25" />
         <entry key="app/src/main/res/layout-small-port/small_portrait.xml" value="0.1" />
         <entry key="app/src/main/res/layout-small/activity_main.xml" value="0.1" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.1" />
-        <entry key="app/src/main/res/layout/fragment_book_details.xml" value="0.17198581560283688" />
+        <entry key="app/src/main/res/layout/fragment_book_details.xml" value="0.33" />
         <entry key="app/src/main/res/layout/fragment_book_list.xml" value="0.5" />
         <entry key="app/src/main/res/layout/recycler_view_item.xml" value="0.22" />
       </map>
