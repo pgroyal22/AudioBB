@@ -2,9 +2,9 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/frameLayout"
+    android:id="@+id/constraintLayout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="200dp"
     tools:context=".BookDetailsFragment">
 
     <TextView
@@ -17,21 +17,23 @@
 
     <TextView
         android:id="@+id/detailsAuthorText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="180dp"
-        android:layout_marginTop="296dp"
+        android:layout_width="221dp"
+        android:layout_height="76dp"
+        android:layout_marginStart="112dp"
+        android:layout_marginTop="116dp"
         android:gravity="center_horizontal"
+        android:textSize="34sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/detailsTitleText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="180dp"
-        android:layout_marginTop="104dp"
+        android:layout_width="225dp"
+        android:layout_height="103dp"
+        android:layout_marginStart="108dp"
+        android:layout_marginTop="16dp"
         android:gravity="center_horizontal"
+        android:textSize="40sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>
