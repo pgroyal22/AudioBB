@@ -1,5 +1,8 @@
 package edu.temple.audiobb
-class BookList(var array: Array<Book>) {
+
+import java.io.Serializable
+
+class BookList(var array: ArrayList<Book>) : Serializable{
     var arrayList : ArrayList<Book> = arrayListOf()
     init{
         arrayList.addAll(array)

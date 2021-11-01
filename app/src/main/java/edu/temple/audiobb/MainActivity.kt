@@ -1,14 +1,17 @@
 package edu.temple.audiobb
 
-import android.app.Activity
-import androidx.appcompat.app.AppCompatActivity
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.Button
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 
 class MainActivity : AppCompatActivity(), BookListFragment.EventInterface {
-    var twoPane = false
-    lateinit var bookObjectViewModel: BookObjectViewModel
+    private var twoPane = false
+    private lateinit var bookList: BookList
+    private lateinit var bookObjectViewModel: BookObjectViewModel
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -16,24 +19,31 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface {
         twoPane = this.findViewById<View>(R.id.fragmentContainerView2) != null
         bookObjectViewModel = ViewModelProvider(this).get(BookObjectViewModel::class.java)
 
+        val searchLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()){
+            bookList = it.data?.getSerializableExtra("BOOK_LIST") as BookList
+        }
+
+        val launchSearchButton = findViewById<Button>(R.id.launchSearchButton).setOnClickListener{
+            val searchIntent = Intent(this, BookSearchActivity::class.java)
+            searchLauncher.launch(searchIntent)
+        }
+
+
+        val bookList = getBookList()
 
         // Pop DisplayFragment from stack if color was previously selected,
         // but user has since cleared selection
-        if (supportFragmentManager.findFragmentById(R.id.fragmentContainerView)
-                    is BookDetailsFragment
-            && bookObjectViewModel.getBookObject() == null)
-            supportFragmentManager.popBackStack()
 
         // Remove redundant DisplayFragment if we're moving from single-pane mode
         // (one container) to double pane mode (two containers)
         // and a book has been selected
         if (supportFragmentManager.findFragmentById(R.id.fragmentContainerView) is BookDetailsFragment
             && twoPane)
-            supportFragmentManager.popBackStack();
+            supportFragmentManager.popBackStack()
 
         if (savedInstanceState == null)
             supportFragmentManager.beginTransaction()
-                .replace(R.id.fragmentContainerView, BookListFragment.newInstance())
+                .replace(R.id.fragmentContainerView, BookListFragment.newInstance(bookList))
                 .commit()
 
         if (twoPane) {
@@ -41,16 +51,12 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface {
                 supportFragmentManager.beginTransaction()
                     .add(R.id.fragmentContainerView2, BookDetailsFragment())
                     .commit()
-            else if (bookObjectViewModel.getBookObject() == null) { // If moving to single-pane
-                supportFragmentManager.beginTransaction()                 // but a color was selected
-                    .add(
-                        R.id.fragmentContainerView2,
-                        BookDetailsFragment()
-                    )              // before the switch
-                    .addToBackStack(null)
-                    .commit()
-            }
         }
+    }
+
+
+    private fun getBookList(): BookList{
+        return BookList(arrayListOf())
     }
 
     override fun selectionMade() {
@@ -69,6 +75,6 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface {
 
     override fun onBackPressed() {
         super.onBackPressed()
-        bookObjectViewModel.setBookObject(Book("", ""))
+        bookObjectViewModel.setBookObject(Book("", "", 0, ""))
     }
 }

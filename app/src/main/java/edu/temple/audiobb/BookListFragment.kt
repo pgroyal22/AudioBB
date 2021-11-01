@@ -13,11 +13,13 @@ class BookListFragment : Fragment() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var layout : View
     private lateinit var viewModelProvider : ViewModelProvider
-    private lateinit var bookObjects : BookList
+    private var bookObjects : BookList? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        bookObjects = getBookList()
+        arguments?.let{
+            bookObjects = it.getSerializable("BOOK_LIST") as BookList?
+        }
     }
 
     override fun onCreateView(
@@ -37,29 +39,24 @@ class BookListFragment : Fragment() {
         viewModelProvider = ViewModelProvider(requireActivity())
         val onClickListener = View.OnClickListener {
             val position = recyclerView.getChildAdapterPosition(it)
-            viewModelProvider.get(BookObjectViewModel::class.java).setBookObject(bookObjects.get(position))
+            bookObjects?.let { it1 ->
+                viewModelProvider.get(BookObjectViewModel::class.java).setBookObject(
+                    it1.get(position))
+            }
             (activity as EventInterface).selectionMade()
         }
-        recyclerView.adapter = BookAdapter(bookObjects, onClickListener)
+        recyclerView.adapter = bookObjects?.let { BookAdapter(it, onClickListener) }
     }
     companion object {
             @JvmStatic
-            fun newInstance(): BookListFragment {
-                return BookListFragment()
-            }
+            fun newInstance(bookList: BookList) =
+                BookListFragment().apply {
+                    arguments = Bundle().apply{
+                        putSerializable("BOOK_LIST", bookList)
+                    }
+                }
         }
-    fun getBookList(): BookList{
-        return BookList(arrayOf(Book("A Tale of Two Cities", "Charles Dickens"),
-            Book("Cat's Cradle", "Kurt Vonnegut"),
-            Book("The Scarlet Letter", "Nathaniel Hawthorne"),
-            Book("Crime and  Punishment", "Fyodor Dostoevsky"),
-            Book("Fahrenheit 451", "Ray Bradbury"),
-            Book("War of the  Worlds", "H.G. Wells"),
-            Book("Nineteen Eighty-Four", "George Orwell"),
-            Book("Adventures of Huckleberry Finn", "Mark Twain"),
-            Book("Slaughterhouse-Five", "Kurt Vonnegut"),
-            Book("Welcome to the Monkey House", "Kurt Vonnegut")))
-    }
+
     interface EventInterface{
         fun selectionMade()
     }

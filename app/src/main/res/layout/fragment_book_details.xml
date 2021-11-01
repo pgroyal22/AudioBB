@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/constraintLayout"
     android:layout_width="match_parent"
-    android:layout_height="200dp"
+    android:layout_height="600dp"
     tools:context=".BookDetailsFragment">
 
     <TextView
@@ -19,8 +19,8 @@
         android:id="@+id/detailsAuthorText"
         android:layout_width="221dp"
         android:layout_height="76dp"
-        android:layout_marginStart="112dp"
-        android:layout_marginTop="116dp"
+        android:layout_marginStart="88dp"
+        android:layout_marginTop="492dp"
         android:gravity="center_horizontal"
         android:textSize="34sp"
         app:layout_constraintStart_toStartOf="parent"
@@ -29,11 +29,19 @@
     <TextView
         android:id="@+id/detailsTitleText"
         android:layout_width="225dp"
-        android:layout_height="103dp"
-        android:layout_marginStart="108dp"
-        android:layout_marginTop="16dp"
+        android:layout_height="182dp"
+        android:layout_marginStart="88dp"
+        android:layout_marginTop="308dp"
         android:gravity="center_horizontal"
         android:textSize="40sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/coverImageView"
+        android:layout_width="229dp"
+        android:layout_height="278dp"
+        tools:layout_editor_absoluteX="84dp"
+        tools:layout_editor_absoluteY="30dp"
+        tools:src="@tools:sample/backgrounds/scenic" />
 </androidx.constraintlayout.widget.ConstraintLayout>
