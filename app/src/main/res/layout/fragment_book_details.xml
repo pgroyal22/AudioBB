@@ -19,18 +19,18 @@
         android:id="@+id/detailsAuthorText"
         android:layout_width="221dp"
         android:layout_height="76dp"
-        android:layout_marginStart="88dp"
-        android:layout_marginTop="492dp"
-        android:gravity="center_horizontal"
+        android:layout_marginStart="92dp"
+        android:layout_marginTop="476dp"
+        android:gravity="center_horizontal|top"
         android:textSize="34sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/detailsTitleText"
-        android:layout_width="225dp"
-        android:layout_height="182dp"
-        android:layout_marginStart="88dp"
+        android:layout_width="386dp"
+        android:layout_height="176dp"
+        android:layout_marginStart="16dp"
         android:layout_marginTop="308dp"
         android:gravity="center_horizontal"
         android:textSize="40sp"
@@ -41,7 +41,9 @@
         android:id="@+id/coverImageView"
         android:layout_width="229dp"
         android:layout_height="278dp"
-        tools:layout_editor_absoluteX="84dp"
-        tools:layout_editor_absoluteY="30dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="88dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
         tools:src="@tools:sample/backgrounds/scenic" />
 </androidx.constraintlayout.widget.ConstraintLayout>

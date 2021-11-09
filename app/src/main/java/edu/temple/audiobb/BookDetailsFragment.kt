@@ -1,5 +1,6 @@
 package edu.temple.audiobb
 
+import android.graphics.Bitmap
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -8,6 +9,9 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.lifecycle.ViewModelProvider
+import com.android.volley.Response
+import com.android.volley.toolbox.ImageRequest
+import com.android.volley.toolbox.Volley
 
 class BookDetailsFragment : Fragment() {
 
@@ -52,5 +56,32 @@ class BookDetailsFragment : Fragment() {
         titleTextView.text = book.title
         authorTextView.text = book.author
 
+        if (!this.isDetached)
+        {
+            val volleyQueue = Volley.newRequestQueue(this.requireContext())
+            volleyQueue.add(ImageRequest(
+                book.coverURL,
+                {
+                    coverImageView.setImageBitmap(it)
+                },
+                0,
+                0,
+                ImageView.ScaleType.CENTER_CROP,
+                Bitmap.Config.ARGB_8888,
+                {
+                    coverImageView.setImageResource(R.drawable.ic_launcher_background)
+                }
+            ))
+        }
+    }
+
+    override fun onDestroy() {
+
+        super.onDestroy()
+    }
+
+    override fun onDetach() {
+        viewModelStore.clear()
+        super.onDetach()
     }
 }

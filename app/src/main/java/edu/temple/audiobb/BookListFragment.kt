@@ -1,6 +1,7 @@
 package edu.temple.audiobb
 
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -13,13 +14,14 @@ class BookListFragment : Fragment() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var layout : View
     private lateinit var viewModelProvider : ViewModelProvider
-    private var bookObjects : BookList? = null
+    private var bookList : BookList? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let{
-            bookObjects = it.getSerializable("BOOK_LIST") as BookList?
+            bookList = it.getSerializable("BOOK_LIST") as BookList?
         }
+        Log.d("Data put into Fragment", bookList.toString())
     }
 
     override fun onCreateView(
@@ -39,19 +41,19 @@ class BookListFragment : Fragment() {
         viewModelProvider = ViewModelProvider(requireActivity())
         val onClickListener = View.OnClickListener {
             val position = recyclerView.getChildAdapterPosition(it)
-            bookObjects?.let { it1 ->
+            bookList?.let { it1 ->
                 viewModelProvider.get(BookObjectViewModel::class.java).setBookObject(
                     it1.get(position))
             }
             (activity as EventInterface).selectionMade()
         }
-        recyclerView.adapter = bookObjects?.let { BookAdapter(it, onClickListener) }
+        recyclerView.adapter = bookList?.let { BookAdapter(it, onClickListener) }
     }
     companion object {
             @JvmStatic
             fun newInstance(bookList: BookList) =
                 BookListFragment().apply {
-                    arguments = Bundle().apply{
+                    this.arguments = Bundle().apply{
                         putSerializable("BOOK_LIST", bookList)
                     }
                 }

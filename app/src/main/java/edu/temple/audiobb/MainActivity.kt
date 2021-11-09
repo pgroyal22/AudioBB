@@ -21,6 +21,9 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface {
 
         val searchLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()){
             bookList = it.data?.getSerializableExtra("BOOK_LIST") as BookList
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragmentContainerView, BookListFragment.newInstance(bookList))
+                .commit()
         }
 
         val launchSearchButton = findViewById<Button>(R.id.launchSearchButton).setOnClickListener{
@@ -31,12 +34,6 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface {
 
         val bookList = getBookList()
 
-        // Pop DisplayFragment from stack if color was previously selected,
-        // but user has since cleared selection
-
-        // Remove redundant DisplayFragment if we're moving from single-pane mode
-        // (one container) to double pane mode (two containers)
-        // and a book has been selected
         if (supportFragmentManager.findFragmentById(R.id.fragmentContainerView) is BookDetailsFragment
             && twoPane)
             supportFragmentManager.popBackStack()
@@ -55,8 +52,8 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface {
     }
 
 
-    private fun getBookList(): BookList{
-        return BookList(arrayListOf())
+    private fun getBookList(): BookList {
+        return BookList()
     }
 
     override fun selectionMade() {
@@ -74,7 +71,8 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface {
     }
 
     override fun onBackPressed() {
-        super.onBackPressed()
         bookObjectViewModel.setBookObject(Book("", "", 0, ""))
+        super.onBackPressed()
+
     }
 }
