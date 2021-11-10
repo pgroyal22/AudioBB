@@ -32,7 +32,7 @@ class BookSearchActivity : AppCompatActivity() {
         }
 
         val searchEditText = findViewById<EditText>(R.id.searchEditText)
-        val searchButton = findViewById<Button>(R.id.enterSearchButton).setOnClickListener {
+        findViewById<Button>(R.id.enterSearchButton).setOnClickListener {
             val query = searchEditText.text.toString()
 
             if (query.isBlank()) {
@@ -45,6 +45,7 @@ class BookSearchActivity : AppCompatActivity() {
                         ,null
                         , {
                             try {
+                                bookList.removeAll()
                                 for (i in 0 until it.length()){
                                     val bookJSON : JSONObject = it.getJSONObject(i)
                                     bookList.add(Book(bookJSON.getString("title"), bookJSON.getString("author"), bookJSON.getInt("id"), bookJSON.getString("cover_url")))

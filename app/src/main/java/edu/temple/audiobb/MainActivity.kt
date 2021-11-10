@@ -9,46 +9,55 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 
 class MainActivity : AppCompatActivity(), BookListFragment.EventInterface {
-    private var twoPane = false
+    private val singlePane : Boolean by lazy{
+        findViewById<View>(R.id.fragmentContainerView2) == null
+    }
     private lateinit var bookList: BookList
     private lateinit var bookObjectViewModel: BookObjectViewModel
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        twoPane = this.findViewById<View>(R.id.fragmentContainerView2) != null
         bookObjectViewModel = ViewModelProvider(this).get(BookObjectViewModel::class.java)
 
-        val searchLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()){
-            bookList = it.data?.getSerializableExtra("BOOK_LIST") as BookList
+        var bookList = getBookList()
+
+        // activity is being run for the first time
+        if (savedInstanceState == null)
             supportFragmentManager.beginTransaction()
-                .replace(R.id.fragmentContainerView, BookListFragment.newInstance(bookList))
+                .add(R.id.fragmentContainerView, BookListFragment.newInstance(bookList))
+                .commit()
+        // if single pane and a book has been previously selected, switch to that book detail
+        else if(singlePane && bookObjectViewModel.getBookObject().value != null){
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragmentContainerView, BookDetailsFragment.newInstance())
+                .setReorderingAllowed(true)
+                .addToBackStack(null)
                 .commit()
         }
 
-        val launchSearchButton = findViewById<Button>(R.id.launchSearchButton).setOnClickListener{
+        // if in double pane, we need to make sure the bookdetails fragment is populated
+        if (!singlePane && supportFragmentManager.findFragmentById(R.id.fragmentContainerView2) !is BookDetailsFragment){
+            supportFragmentManager.beginTransaction()
+                .add(R.id.fragmentContainerView2, BookDetailsFragment.newInstance())
+                .commit()
+        }
+
+        // handles callback for search activity finishign
+        val searchLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()){
+            if (it.data?.getSerializableExtra("BOOK_LIST") != null){
+                bookList = it.data?.getSerializableExtra("BOOK_LIST") as BookList
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.fragmentContainerView, BookListFragment.newInstance(bookList))
+                    .commit()
+            }
+        }
+
+        findViewById<Button>(R.id.launchSearchButton).setOnClickListener{
             val searchIntent = Intent(this, BookSearchActivity::class.java)
             searchLauncher.launch(searchIntent)
         }
 
-
-        val bookList = getBookList()
-
-        if (supportFragmentManager.findFragmentById(R.id.fragmentContainerView) is BookDetailsFragment
-            && twoPane)
-            supportFragmentManager.popBackStack()
-
-        if (savedInstanceState == null)
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.fragmentContainerView, BookListFragment.newInstance(bookList))
-                .commit()
-
-        if (twoPane) {
-            if (supportFragmentManager.findFragmentById(R.id.fragmentContainerView2) == null)
-                supportFragmentManager.beginTransaction()
-                    .add(R.id.fragmentContainerView2, BookDetailsFragment())
-                    .commit()
-        }
     }
 
 
@@ -57,22 +66,17 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface {
     }
 
     override fun selectionMade() {
-        if (!twoPane)
+        if (singlePane) {
             supportFragmentManager.beginTransaction()
                 .replace(R.id.fragmentContainerView, BookDetailsFragment())
-                .addToBackStack(null)
-                .commit()
-        else{
-            supportFragmentManager.beginTransaction()
-                .add(R.id.fragmentContainerView2, BookDetailsFragment())
+                .setReorderingAllowed(true)
                 .addToBackStack(null)
                 .commit()
         }
     }
 
     override fun onBackPressed() {
-        bookObjectViewModel.setBookObject(Book("", "", 0, ""))
+        bookObjectViewModel.setBookObject(null)
         super.onBackPressed()
-
     }
 }

@@ -19,4 +19,8 @@ class BookList : Serializable{
     operator fun get(index: Int) = bookList[index]
 
     fun size() = bookList.size
+
+    fun removeAll(){
+        bookList.removeAll(this.bookList)
+    }
 }

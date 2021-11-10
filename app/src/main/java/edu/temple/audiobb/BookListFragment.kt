@@ -21,13 +21,12 @@ class BookListFragment : Fragment() {
         arguments?.let{
             bookList = it.getSerializable("BOOK_LIST") as BookList?
         }
-        Log.d("Data put into Fragment", bookList.toString())
     }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
 
         layout = inflater.inflate(R.layout.fragment_book_list, container, false)
 

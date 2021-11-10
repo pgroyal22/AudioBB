@@ -27,20 +27,23 @@ class BookDetailsFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         // Inflate the layout for this fragment
         layoutView = inflater.inflate(R.layout.fragment_book_details, container, false)
         titleTextView = layoutView.findViewById<TextView>(R.id.detailsTitleText)
         authorTextView = layoutView.findViewById<TextView>(R.id.detailsAuthorText)
         coverImageView =  layoutView.findViewById<ImageView>(R.id.coverImageView)
 
+        return layoutView
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         ViewModelProvider(requireActivity())
             .get(BookObjectViewModel::class.java)
             .getBookObject().observe(requireActivity(), {
                 setSelection(it)
             })
-
-        return layoutView
     }
 
     companion object {
@@ -52,13 +55,16 @@ class BookDetailsFragment : Fragment() {
         }
     }
 
-    private fun setSelection(book: Book){
+    private fun setSelection(book: Book?){
+        if (book == null ){
+            return
+        }
         titleTextView.text = book.title
         authorTextView.text = book.author
 
-        if (!this.isDetached)
+        if (this.isAdded)
         {
-            val volleyQueue = Volley.newRequestQueue(this.requireContext())
+            val volleyQueue = Volley.newRequestQueue(this.requireActivity())
             volleyQueue.add(ImageRequest(
                 book.coverURL,
                 {
