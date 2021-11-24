@@ -48,7 +48,7 @@ class BookSearchActivity : AppCompatActivity() {
                                 bookList.removeAll()
                                 for (i in 0 until it.length()){
                                     val bookJSON : JSONObject = it.getJSONObject(i)
-                                    bookList.add(Book(bookJSON.getString("title"), bookJSON.getString("author"), bookJSON.getInt("id"), bookJSON.getString("cover_url")))
+                                    bookList.add(Book(bookJSON.getString("title"), bookJSON.getString("author"), bookJSON.getInt("id"), bookJSON.getInt("duration"), bookJSON.getString("cover_url")))
                                 }
                                 val resultIntent = Intent().putExtra("BOOK_LIST", bookList)
                                 setResult(Activity.RESULT_OK, resultIntent)
