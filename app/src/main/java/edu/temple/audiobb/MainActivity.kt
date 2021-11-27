@@ -3,14 +3,13 @@ package edu.temple.audiobb
 import android.content.ComponentName
 import android.content.Intent
 import android.content.ServiceConnection
-import android.content.res.Configuration
 import android.os.Bundle
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.util.Log
 import android.view.View
-import android.widget.Button
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
@@ -22,17 +21,27 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, Contr
         findViewById<View>(R.id.fragmentContainerView2) == null
     }
     private lateinit var bookObjectViewModel: BookObjectViewModel
+    private lateinit var controlFragment: ControlFragment
+    private lateinit var bookList : BookList
+    private lateinit var searchLauncher : ActivityResultLauncher<Intent>
+
 
     // media controller vars
     private var isConnected = false
     private lateinit var mediaControlBinder: PlayerService.MediaControlBinder
 
-    val progressHandler = Handler(Looper.getMainLooper()) {
-        it.what.toInt()
-        true
+    private val progressHandler = Handler(Looper.getMainLooper()) {
+        if(it.obj != null) {
+            controlFragment.updateProgress((it.obj as PlayerService.BookProgress).progress)
+            controlFragment.updateNowPlaying((it.obj as PlayerService.BookProgress).bookId)
+            true
+        }
+        else{
+            false
+        }
     }
 
-    val serviceConnection = object : ServiceConnection {
+    private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             isConnected = true
             mediaControlBinder = service as PlayerService.MediaControlBinder
@@ -44,24 +53,29 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, Contr
         }
     }
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        bindService(
+            Intent(this, PlayerService::class.java), serviceConnection, BIND_AUTO_CREATE
+        )
         bookObjectViewModel = ViewModelProvider(this).get(BookObjectViewModel::class.java)
 
-        var bookList = getBookList()
+        bookList = getBookList()
 
-        supportFragmentManager.beginTransaction()
-            .add(R.id.controllerFragementContainerView, ControlFragment.newInstance())
-            .commit()
+
 
         // activity is being run for the first time
-        if (savedInstanceState == null)
+        if (savedInstanceState == null){
             supportFragmentManager.beginTransaction()
                 .add(R.id.fragmentContainerView, BookListFragment.newInstance(bookList))
                 .commit()
+            controlFragment = ControlFragment.newInstance()
+            supportFragmentManager.beginTransaction()
+                .add(R.id.controllerFragementContainerView, controlFragment)
+                .commit()
+        }
         // if single pane and a book has been previously selected, switch to that book detail
         else if (singlePane && bookObjectViewModel.getBookObject().value != null) {
             supportFragmentManager.beginTransaction()
@@ -70,16 +84,23 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, Contr
                 .addToBackStack(null)
                 .commit()
         }
+        else{
+            controlFragment = ControlFragment.newInstance()
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.controllerFragementContainerView, controlFragment)
+                .commit()
+        }
 
         // if in double pane, we need to make sure the bookdetails fragment is populated
         if (!singlePane && supportFragmentManager.findFragmentById(R.id.fragmentContainerView2) !is BookDetailsFragment) {
             supportFragmentManager.beginTransaction()
                 .add(R.id.fragmentContainerView2, BookDetailsFragment.newInstance())
                 .commit()
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragmentContainerView, BookListFragment.newInstance(bookList))
         }
 
-        // handles callback for search activity finishing
-        val searchLauncher =
+        searchLauncher =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
                 if (it.data?.getSerializableExtra("BOOK_LIST") != null) {
                     bookList = it.data?.getSerializableExtra("BOOK_LIST") as BookList
@@ -89,10 +110,6 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, Contr
                 }
             }
 
-        findViewById<Button>(R.id.launchSearchButton).setOnClickListener {
-            val searchIntent = Intent(this, BookSearchActivity::class.java)
-            searchLauncher.launch(searchIntent)
-        }
     }
 
     private fun getBookList(): BookList {
@@ -115,19 +132,29 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, Contr
     }
 
     override fun play() {
-        TODO("Not yet implemented")
+        bookObjectViewModel.getBookObject().value?.id?.let { mediaControlBinder.play(it) }
+        bookObjectViewModel.getBookObject().value?.id?.toString()
+            ?.let { Log.d("Started Playing" , it) }
     }
 
-    override fun setBarProgress(progress: Int) {
-        Log.d("Progress bar", "changed")
+    override fun userChangedProgress(progress: Int) {
+        if(bookObjectViewModel.getBookObject().value != null)
+        mediaControlBinder.seekTo(progress)
     }
 
     override fun pause() {
-        TODO("Not yet implemented")
+        if(bookObjectViewModel.getBookObject().value != null)
+        mediaControlBinder.pause()
     }
 
     override fun stop() {
-        TODO("Not yet implemented")
+        if(bookObjectViewModel.getBookObject().value != null)
+        mediaControlBinder.stop()
+    }
+
+    override fun launchSearch() {
+        val searchIntent = Intent(this, BookSearchActivity::class.java)
+        searchLauncher.launch(searchIntent)
     }
 
 }

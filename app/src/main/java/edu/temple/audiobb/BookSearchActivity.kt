@@ -38,6 +38,7 @@ class BookSearchActivity : AppCompatActivity() {
             if (query.isBlank()) {
                 searchEditText.error = "No search entered"
             }
+
             else {
                 volleyQueue.add(
                     JsonArrayRequest(Request.Method.GET
@@ -58,7 +59,7 @@ class BookSearchActivity : AppCompatActivity() {
                             }
                         }
                         , {
-                            Toast.makeText(this, "Error", Toast.LENGTH_LONG).show()
+                            searchEditText.error = "Network Error"
                         }))
             }
         }
