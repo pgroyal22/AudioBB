@@ -4,13 +4,13 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 
-class BookObjectViewModel : ViewModel() {
+class PlayingBookViewModel : ViewModel() {
     private var bookObjectLiveData = MutableLiveData<Book>()
-    fun getBookObject() : LiveData<Book>{
+    fun getBookObject() : LiveData<Book> {
         return bookObjectLiveData
     }
 
-    fun setBookObject(bookObject: Book?){
-        bookObjectLiveData.value = bookObject
+    fun setBookObject(book : Book?){
+        bookObjectLiveData.value = book
     }
 }

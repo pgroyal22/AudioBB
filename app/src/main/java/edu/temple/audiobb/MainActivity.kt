@@ -7,12 +7,15 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
-import android.util.Log
+import android.service.controls.Control
 import android.view.View
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
+import com.android.volley.Request
+import com.android.volley.toolbox.JsonObjectRequest
+import com.android.volley.toolbox.Volley
 import edu.temple.audlibplayer.PlayerService
 
 
@@ -20,25 +23,47 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, Contr
     private val singlePane: Boolean by lazy {
         findViewById<View>(R.id.fragmentContainerView2) == null
     }
-    private lateinit var bookObjectViewModel: BookObjectViewModel
+
+    private lateinit  var serviceIntent : Intent
+
+    // view models
+    private lateinit var selectedBookViewModel: SelectedBookViewModel
+    private lateinit var playingBookViewModel: PlayingBookViewModel
+
     private lateinit var controlFragment: ControlFragment
     private lateinit var bookList : BookList
     private lateinit var searchLauncher : ActivityResultLauncher<Intent>
-
 
     // media controller vars
     private var isConnected = false
     private lateinit var mediaControlBinder: PlayerService.MediaControlBinder
 
-    private val progressHandler = Handler(Looper.getMainLooper()) {
-        if(it.obj != null) {
-            controlFragment.updateProgress((it.obj as PlayerService.BookProgress).progress)
-            controlFragment.updateNowPlaying((it.obj as PlayerService.BookProgress).bookId)
-            true
+    private val progressHandler = Handler(Looper.getMainLooper()) { msg ->
+        msg.obj?.let { msgObj ->
+            val bookProgressObject = msgObj as PlayerService.BookProgress
+            if(playingBookViewModel.getBookObject().value == null){
+                val id = bookProgressObject.bookId
+                Volley.newRequestQueue(this)
+                    .add(JsonObjectRequest(
+                        Request.Method.GET,
+                        "https://kamorris.com/lab/cis3515/book.php?id=$id",
+                        null,
+                        { bookJSON ->
+                            playingBookViewModel.setBookObject(Book(bookJSON.getString("title"), bookJSON.getString("author"), bookJSON.getInt("id"), bookJSON.getInt("duration"), bookJSON.getString("cover_url")))
+                            if (selectedBookViewModel.getBookObject().value == null){
+                                selectedBookViewModel.setBookObject(playingBookViewModel.getBookObject().value)
+                            }
+                        }, {}))
+                }
+                supportFragmentManager.findFragmentById(R.id.controllerFragmentContainerView)?.run{
+                    with (this as ControlFragment){
+                        playingBookViewModel.getBookObject().value?.also{
+                            updateProgress(((bookProgressObject.progress / it.duration.toFloat()) * 100).toInt())
+                        }
+                    }
+                }
         }
-        else{
-            false
-        }
+        true
     }
 
     private val serviceConnection = object : ServiceConnection {
@@ -57,37 +82,37 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, Contr
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        bindService(
-            Intent(this, PlayerService::class.java), serviceConnection, BIND_AUTO_CREATE
-        )
-        bookObjectViewModel = ViewModelProvider(this).get(BookObjectViewModel::class.java)
+        selectedBookViewModel = ViewModelProvider(this).get(SelectedBookViewModel::class.java)
+        playingBookViewModel = ViewModelProvider(this).get(PlayingBookViewModel::class.java)
+
+        controlFragment = supportFragmentManager.findFragmentById(R.id.controllerFragmentContainerView) as ControlFragment
+        playingBookViewModel.getBookObject().observe(this, {
+            controlFragment.setNowPlaying(it.title)
+        })
+
+
+        serviceIntent = Intent(this, PlayerService::class.java)
+        bindService(serviceIntent, serviceConnection, BIND_AUTO_CREATE)
 
         bookList = getBookList()
 
-
+        if(supportFragmentManager.findFragmentById(R.id.fragmentContainerView) is BookDetailsFragment && selectedBookViewModel.getBookObject().value != null){
+            supportFragmentManager.popBackStack()
+        }
 
         // activity is being run for the first time
         if (savedInstanceState == null){
+            controlFragment = ControlFragment.newInstance()
             supportFragmentManager.beginTransaction()
                 .add(R.id.fragmentContainerView, BookListFragment.newInstance(bookList))
                 .commit()
-            controlFragment = ControlFragment.newInstance()
-            supportFragmentManager.beginTransaction()
-                .add(R.id.controllerFragementContainerView, controlFragment)
-                .commit()
         }
         // if single pane and a book has been previously selected, switch to that book detail
-        else if (singlePane && bookObjectViewModel.getBookObject().value != null) {
+        else if (singlePane && selectedBookViewModel.getBookObject().value != null) {
             supportFragmentManager.beginTransaction()
                 .replace(R.id.fragmentContainerView, BookDetailsFragment.newInstance())
                 .setReorderingAllowed(true)
                 .addToBackStack(null)
-                .commit()
-        }
-        else{
-            controlFragment = ControlFragment.newInstance()
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.controllerFragementContainerView, controlFragment)
                 .commit()
         }
 
@@ -96,8 +121,6 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, Contr
             supportFragmentManager.beginTransaction()
                 .add(R.id.fragmentContainerView2, BookDetailsFragment.newInstance())
                 .commit()
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.fragmentContainerView, BookListFragment.newInstance(bookList))
         }
 
         searchLauncher =
@@ -109,7 +132,6 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, Contr
                         .commit()
                 }
             }
-
     }
 
     private fun getBookList(): BookList {
@@ -127,29 +149,33 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, Contr
     }
 
     override fun onBackPressed() {
-        bookObjectViewModel.setBookObject(null)
+        selectedBookViewModel.setBookObject(null)
         super.onBackPressed()
     }
 
     override fun play() {
-        bookObjectViewModel.getBookObject().value?.id?.let { mediaControlBinder.play(it) }
-        bookObjectViewModel.getBookObject().value?.id?.toString()
-            ?.let { Log.d("Started Playing" , it) }
+        if(isConnected) {
+            selectedBookViewModel.getBookObject().value?.id?.let { mediaControlBinder.play(it) }
+            playingBookViewModel.setBookObject(selectedBookViewModel.getBookObject().value)
+            startService(serviceIntent)
+        }
     }
 
     override fun userChangedProgress(progress: Int) {
-        if(bookObjectViewModel.getBookObject().value != null)
-        mediaControlBinder.seekTo(progress)
+        if(isConnected)
+        mediaControlBinder.seekTo((playingBookViewModel.getBookObject().value!!.duration * (progress.toFloat() / 100)).toInt())
     }
 
     override fun pause() {
-        if(bookObjectViewModel.getBookObject().value != null)
+        if(isConnected)
         mediaControlBinder.pause()
     }
 
     override fun stop() {
-        if(bookObjectViewModel.getBookObject().value != null)
-        mediaControlBinder.stop()
+        if(isConnected){
+            mediaControlBinder.stop()
+            stopService(serviceIntent)
+        }
     }
 
     override fun launchSearch() {

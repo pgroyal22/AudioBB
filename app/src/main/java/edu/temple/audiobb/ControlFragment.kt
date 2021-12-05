@@ -1,6 +1,7 @@
 package edu.temple.audiobb
 
 import android.content.Intent
+import android.icu.text.CaseMap
 import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
@@ -20,13 +21,8 @@ import org.json.JSONObject
 
 
 class ControlFragment : Fragment() {
-    private lateinit var _seekBar: SeekBar
-    private lateinit var _nowPlayingTextView : TextView
-    private val volleyQueue: RequestQueue by lazy {
-        Volley.newRequestQueue(context)
-    }
-    private var nowPlayingBook : Book? = null
-
+    private var _seekBar : SeekBar? = null
+    private var _nowPlayingTextView : TextView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,22 +54,21 @@ class ControlFragment : Fragment() {
         }
 
         _nowPlayingTextView = view.findViewById<TextView>(R.id.nowPlayingTextView)
+        _seekBar = view.findViewById<SeekBar>(R.id.seekBar)
 
-        class MySeekBarChangeListener() : SeekBar.OnSeekBarChangeListener {
+        _seekBar?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if(fromUser){
-                    _seekBar.setProgress(progress, true)
+                    (activity as EventInterface).userChangedProgress(progress)
                 }
             }
+
             override fun onStartTrackingTouch(seekBar: SeekBar?) {
             }
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                (requireActivity() as EventInterface).userChangedProgress(_seekBar.progress)
             }
         }
-        _seekBar = view.findViewById<SeekBar>(R.id.seekBar)
-        _seekBar.setOnSeekBarChangeListener(MySeekBarChangeListener())
-
+        )
         return view
     }
 
@@ -96,36 +91,10 @@ class ControlFragment : Fragment() {
     }
 
     fun updateProgress(progress: Int){
-        _seekBar.setProgress(progress, true)
+        _seekBar?.setProgress(progress, true)
     }
 
-    fun updateNowPlaying(bookID : Int){
-
-        if(nowPlayingBook?.id == bookID){
-            return
-        }
-
-        Log.d("Book id ", bookID.toString())
-
-        volleyQueue.add(
-            JsonObjectRequest(Request.Method.GET
-                , "https://kamorris.com/lab/cis3515/book.php?id=$bookID"
-                ,null
-                , {
-                    try {
-                        Log.d("Book JSON", it.toString())
-                        //  val title : String, val author : String, val id : Int, val duration: Int, val coverURL : String
-                        nowPlayingBook = Book(it.getString("title"), it.getString("author"), it.getInt("id"), it.getInt("duration"), it.getString("cover_url"))
-                        if(nowPlayingBook != null){
-                            _nowPlayingTextView.text = getString(R.string.now_playing_text, nowPlayingBook?.title)
-                        }
-                    } catch(e: JSONException) {
-                        e.printStackTrace()
-                    }
-                }
-                , {
-                    it.printStackTrace()
-                })
-        )
+    fun setNowPlaying(title: String){
+        _nowPlayingTextView?.text = title
     }
 }

@@ -40,7 +40,7 @@ class BookDetailsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         ViewModelProvider(requireActivity())
-            .get(BookObjectViewModel::class.java)
+            .get(SelectedBookViewModel::class.java)
             .getBookObject().observe(requireActivity(), {
                 setSelection(it)
             })
