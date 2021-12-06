@@ -1,22 +1,28 @@
 package edu.temple.audiobb
 
+import android.app.DownloadManager
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
-import android.os.Bundle
-import android.os.Handler
-import android.os.IBinder
-import android.os.Looper
+import android.net.Uri
+import android.os.*
 import android.service.controls.Control
+import android.util.Log
 import android.view.View
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModelProvider
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
+import com.google.gson.Gson
 import edu.temple.audlibplayer.PlayerService
+import java.io.*
+import java.net.URI
+import java.util.logging.Level.parse
 
 
 class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, ControlFragment.EventInterface {
@@ -82,19 +88,40 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, Contr
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        val preferences = getPreferences(MODE_PRIVATE)
+        val preferences_editor = preferences.edit()
+        val gson = Gson()
+
         selectedBookViewModel = ViewModelProvider(this).get(SelectedBookViewModel::class.java)
         playingBookViewModel = ViewModelProvider(this).get(PlayingBookViewModel::class.java)
 
-        controlFragment = supportFragmentManager.findFragmentById(R.id.controllerFragmentContainerView) as ControlFragment
-        playingBookViewModel.getBookObject().observe(this, {
-            controlFragment.setNowPlaying(it.title)
-        })
 
+
+        // persists change every time the playing book is changed
+        playingBookViewModel.getBookObject().observe(this){ playingBook ->
+            val json = gson.toJson(playingBook)
+            preferences_editor.putString("NOW_PLAYING_BOOK", json)
+            preferences_editor.apply()
+        }
+
+        // looks for persisted changes on startup
+        var json = preferences.getString("NOW_PLAYING_BOOK", null)
+        if(json != null){
+            playingBookViewModel.setBookObject(gson.fromJson(json, Book::class.java))
+        }
+        bookList = BookList()
+        json = preferences.getString("BOOKLIST", null)
+        if(json != null){
+            bookList = gson.fromJson(json, BookList::class.java)
+        }
+
+
+
+        controlFragment = supportFragmentManager.findFragmentById(R.id.controllerFragmentContainerView) as ControlFragment
 
         serviceIntent = Intent(this, PlayerService::class.java)
         bindService(serviceIntent, serviceConnection, BIND_AUTO_CREATE)
 
-        bookList = getBookList()
 
         if(supportFragmentManager.findFragmentById(R.id.fragmentContainerView) is BookDetailsFragment && selectedBookViewModel.getBookObject().value != null){
             supportFragmentManager.popBackStack()
@@ -127,6 +154,9 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, Contr
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
                 if (it.data?.getSerializableExtra("BOOK_LIST") != null) {
                     bookList = it.data?.getSerializableExtra("BOOK_LIST") as BookList
+                    json = gson.toJson(bookList)
+                    preferences_editor.putString("BOOKLIST", json)
+                    preferences_editor.apply()
                     supportFragmentManager.beginTransaction()
                         .replace(R.id.fragmentContainerView, BookListFragment.newInstance(bookList))
                         .commit()
@@ -134,9 +164,11 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, Contr
             }
     }
 
-    private fun getBookList(): BookList {
-        return BookList()
+    override fun onBackPressed() {
+        selectedBookViewModel.setBookObject(null)
+        super.onBackPressed()
     }
+
 
     override fun selectionMade() {
         if (singlePane) {
@@ -148,14 +180,19 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, Contr
         }
     }
 
-    override fun onBackPressed() {
-        selectedBookViewModel.setBookObject(null)
-        super.onBackPressed()
-    }
-
     override fun play() {
         if(isConnected) {
-            selectedBookViewModel.getBookObject().value?.id?.let { mediaControlBinder.play(it) }
+            selectedBookViewModel.getBookObject().value?.id?.let { id ->
+                val idStr = id.toString()
+                val currentBookFile = File(URI("file://" + getExternalFilesDir(Environment.DIRECTORY_AUDIOBOOKS) + "AudioBB" + "/book" + idStr))
+                if(currentBookFile.exists()){
+                    mediaControlBinder.play(currentBookFile, 0)
+                }
+                else{
+                    mediaControlBinder.play(id)
+                    downloadBookFile("https://kamorris.com/lab/audlib/download.php?id=$id", currentBookFile)
+                }
+            }
             playingBookViewModel.setBookObject(selectedBookViewModel.getBookObject().value)
             startService(serviceIntent)
         }
@@ -167,12 +204,14 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, Contr
     }
 
     override fun pause() {
-        if(isConnected)
-        mediaControlBinder.pause()
+        if(isConnected){
+
+            mediaControlBinder.pause()
+        }
     }
 
     override fun stop() {
-        if(isConnected){
+        if(isConnected && mediaControlBinder.isPlaying){
             mediaControlBinder.stop()
             stopService(serviceIntent)
         }
@@ -183,4 +222,11 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, Contr
         searchLauncher.launch(searchIntent)
     }
 
+    private fun downloadBookFile(url : String, file : File){
+        val request = DownloadManager.Request(Uri.parse(url))
+            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_HIDDEN)
+            .setDestinationUri(Uri.fromFile(file))
+        val downloadManager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
+        downloadManager.enqueue(request)
+    }
 }

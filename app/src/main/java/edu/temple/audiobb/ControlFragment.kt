@@ -11,6 +11,8 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.SeekBar
 import android.widget.TextView
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.JsonArrayRequest
@@ -37,6 +39,7 @@ class ControlFragment : Fragment() {
     ): View? {
         // Inflate the layout for this fragment
         val view = inflater.inflate(R.layout.fragment_control, container, false)
+        _nowPlayingTextView = view.findViewById<TextView>(R.id.nowPlayingTextView)
 
         view.findViewById<Button>(R.id.playButton).setOnClickListener{
             (requireActivity() as EventInterface).play()
@@ -53,8 +56,14 @@ class ControlFragment : Fragment() {
             (requireActivity() as EventInterface).launchSearch()
         }
 
-        _nowPlayingTextView = view.findViewById<TextView>(R.id.nowPlayingTextView)
         _seekBar = view.findViewById<SeekBar>(R.id.seekBar)
+
+        ViewModelProvider(requireActivity())
+            .get(PlayingBookViewModel::class.java)
+            .getBookObject().observe(requireActivity(), { book ->
+                if(book != null)
+                _nowPlayingTextView?.text = getString(R.string.now_playing_text, book.title)
+            })
 
         _seekBar?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
@@ -94,7 +103,7 @@ class ControlFragment : Fragment() {
         _seekBar?.setProgress(progress, true)
     }
 
-    fun setNowPlaying(title: String){
-        _nowPlayingTextView?.text = title
-    }
+//    fun setNowPlaying(title: String){
+//        _nowPlayingTextView?.text = title
+//    }
 }

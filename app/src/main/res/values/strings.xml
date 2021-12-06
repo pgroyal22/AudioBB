@@ -3,5 +3,5 @@
     <string name="searchbox_text">Enter Search Term</string>
     <string name="searchbutton_text">Search</string>
     <string name="launch_search_button">Start Searching</string>
-    <string name="now_playing_text">Now Playing %1$s</string>
+    <string name="now_playing_text">Now Playing: %1$s</string>
 </resources>

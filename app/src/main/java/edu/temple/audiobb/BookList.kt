@@ -4,9 +4,7 @@ import java.io.Serializable
 
 
 class BookList : Serializable{
-    private val bookList : MutableList<Book> by lazy {
-        ArrayList()
-    }
+    private val bookList : MutableList<Book> = ArrayList<Book>()
 
     fun add(book: Book) {
         bookList.add(book)
