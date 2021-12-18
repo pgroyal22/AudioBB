@@ -1,21 +1,24 @@
 package edu.temple.audiobb
-class BookList(var array: Array<Book>) {
-    var arrayList : ArrayList<Book> = arrayListOf()
-    init{
-        arrayList.addAll(array)
-    }
-    fun add(element: Book) {
-        arrayList.add(element)
+
+import java.io.Serializable
+
+
+class BookList : Serializable{
+    private val bookList : MutableList<Book> = ArrayList<Book>()
+
+    fun add(book: Book) {
+        bookList.add(book)
     }
 
-    fun remove(element: Book) {
-        arrayList.remove(element)
+    fun remove(book: Book){
+        bookList.remove(book)
     }
 
-    fun get(index: Int): Book {
-        return arrayList.get(index)
-    }
-    fun size() : Int{
-        return arrayList.size
+    operator fun get(index: Int) = bookList[index]
+
+    fun size() = bookList.size
+
+    fun removeAll(){
+        bookList.removeAll(this.bookList)
     }
 }

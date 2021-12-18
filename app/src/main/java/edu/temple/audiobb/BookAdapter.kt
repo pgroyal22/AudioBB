@@ -15,8 +15,8 @@ class BookAdapter (bookObjects : BookList, ocl : View.OnClickListener) :
 
     class BookViewHolder(view: View, ocl : View.OnClickListener) : RecyclerView.ViewHolder(view){
         // constructor applies onClickListener to the imageView held in the holder
-        lateinit var titleTextView : TextView
-        lateinit var authorTextView : TextView
+        var titleTextView : TextView
+        var authorTextView : TextView
         init {
             view.setOnClickListener(ocl)
             titleTextView = view.findViewById<TextView>(R.id.textView)
